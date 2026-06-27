@@ -6,6 +6,14 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-06-27
+
+### Changed
+
+- Republished after scrubbing personal data from the repository and rewriting
+  git history. `v0.1.0` is retracted in `go.mod`; use `v0.1.1`+.
+
+
 ## [0.1.0] - 2026-06-27
 
 First public release.
@@ -24,5 +32,6 @@ First public release.
   and strict `--json`; interactive pickers (huh) on a TTY.
 - Account inference for `~/Developer/Personal` vs `~/Developer/work`.
 
-[Unreleased]: https://github.com/richardamare/ws/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/richardamare/ws/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/richardamare/ws/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/richardamare/ws/releases/tag/v0.1.0

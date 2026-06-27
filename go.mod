@@ -2,6 +2,10 @@ module github.com/richardamare/ws
 
 go 1.26.4
 
+// v0.1.0 was published to the module mirror before personal data was scrubbed
+// from the repository. Use v0.1.1 or later.
+retract v0.1.0
+
 require (
 	github.com/charmbracelet/huh v1.0.0
 	github.com/spf13/cobra v1.10.2
