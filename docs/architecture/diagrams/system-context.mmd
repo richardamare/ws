@@ -1,0 +1,17 @@
+graph TD
+    User[the maintainer] -->|ws up / new / resume| WS[ws CLI - Go]
+
+    WS -->|generate template + reload| CmuxCfg[cmux.json]
+    WS -->|live verbs| Cmux[cmux v0.64.16]
+    Cmux --> WSio[Workspace: Claude tab / Shell tab / Browser tab]
+
+    WS -->|az login as Reader SP\nAZURE_CONFIG_DIR per project| AzReader[Reader SP\nReader on ONE rg]
+    AzReader --> RG[(Resource Group)]
+
+    User -.->|ws elevate: deliberate personal login| AzAdmin[Personal admin\nContributor+UAA, untouched]
+    AzAdmin -.->|Terraform, human-approved| Sub[(Lab Subscription)]
+
+    WS -->|optional| Docker[docker compose + dev container]
+    WS -->|claude --resume id| Sessions[Session bookmarks\nin project YAML]
+
+    Config[(~/.config/ws/\nprojects/*.yaml, certs/*.pem)] --> WS
