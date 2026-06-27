@@ -42,6 +42,21 @@ func TestSurfaceArgsBrowser(t *testing.T) {
 	}
 }
 
+func TestParseHandle(t *testing.T) {
+	cases := map[string]string{
+		"OK workspace:13": "workspace:13",
+		"workspace:1":     "workspace:1",
+		"OK 3ee36000-a8a6-4a5a-ae8c-3d363953d18e":  "3ee36000-a8a6-4a5a-ae8c-3d363953d18e",
+		"created surface surface:7 in workspace:2": "surface:7",
+		"plainvalue": "plainvalue",
+	}
+	for in, want := range cases {
+		if got := parseHandle(in); got != want {
+			t.Errorf("parseHandle(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
 func TestWorkspaceArgs(t *testing.T) {
 	args := workspaceArgs(&config.Project{Name: "proj1", Cwd: "/tmp/x"})
 	joined := strings.Join(args, " ")

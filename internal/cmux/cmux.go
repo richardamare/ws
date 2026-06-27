@@ -7,11 +7,28 @@ package cmux
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/richardamare/ws/internal/config"
 	"github.com/richardamare/ws/internal/run"
 )
+
+// cmux prints replies like "OK workspace:13"; extract the handle (a short ref
+// like workspace:13 or a UUID) from whatever it returns.
+var refPattern = regexp.MustCompile(`(?:window|workspace|pane|surface):\d+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}`)
+
+func parseHandle(out string) string {
+	if m := refPattern.FindString(out); m != "" {
+		return m
+	}
+	// Fallback: last whitespace-delimited token, sans a leading "OK".
+	fields := strings.Fields(strings.TrimSpace(out))
+	if len(fields) == 0 {
+		return ""
+	}
+	return fields[len(fields)-1]
+}
 
 // Service wraps the cmux CLI.
 type Service struct {
@@ -62,7 +79,10 @@ func (s Service) Open(ctx context.Context, p *config.Project) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	ref := strings.TrimSpace(out)
+	ref := parseHandle(out)
+	if ref == "" {
+		return "", fmt.Errorf("could not parse workspace ref from cmux output: %q", out)
+	}
 	for _, tab := range p.Tabs {
 		if _, err := s.Run.Run(ctx, nil, "cmux", surfaceArgs(ref, p, tab)...); err != nil {
 			return ref, fmt.Errorf("open tab %q: %w", tab.Name, err)
@@ -109,5 +129,7 @@ func (s Service) ResumeID(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return strings.TrimSpace(out), nil
+	s2 := strings.TrimSpace(out)
+	s2 = strings.TrimPrefix(s2, "OK ")
+	return strings.TrimSpace(s2), nil
 }
