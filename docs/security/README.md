@@ -4,7 +4,7 @@
 
 ## The problem
 
-the maintainer has **near-Owner** on a **shared lab subscription**: Contributor + User Access Administrator +
+The maintainer has **near-Owner** on a **shared lab subscription**: Contributor + User Access Administrator +
 RBAC Administrator, all **permanent-active**, inherited at **subscription** scope (0 PIM-eligible,
 0 deny assignments). So today his identity can delete **any** resource group in the lab — and any
 session logged in as him inherits that. A stray/hallucinated `az group delete` is a real risk.

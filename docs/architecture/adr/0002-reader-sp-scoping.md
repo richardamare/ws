@@ -6,7 +6,7 @@
 
 ## Context
 
-the maintainer holds near-Owner (Contributor + User Access Administrator + RBAC Administrator), permanent and
+The maintainer holds near-Owner (Contributor + User Access Administrator + RBAC Administrator), permanent and
 inherited at **subscription** scope, on a **shared lab subscription**. Any session logged in as him can
 delete any resource group in the lab. The permissions are slow/bureaucratic to regain, so removing them
 or converting them to PIM-eligible is unacceptable. A session cannot reduce its own token's permissions —

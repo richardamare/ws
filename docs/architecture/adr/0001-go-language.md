@@ -7,7 +7,7 @@
 ## Context
 
 `ws` orchestrates external tools (`cmux`, `az`, `docker`, `gh`, `claude`): spawn a process, wait for it
-to be healthy, branch on exit code, render output. the maintainer's usual stack for personal CLIs is Bun +
+to be healthy, branch on exit code, render output. The maintainer's usual stack for personal CLIs is Bun +
 Effect-TS. Effect shines for deep async error-recovery trees; this tool is moderate orchestration plus
 a strong need for trivial, dependency-free distribution. The binary should drop onto any machine with
 no runtime so a project can be started instantly.
