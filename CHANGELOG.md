@@ -6,6 +6,15 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-06-27
+
+### Changed
+
+- Documentation: consolidated the `v0.1.2` changelog entries that were split
+  across `Unreleased`. No code changes.
+
+## [0.1.2] - 2026-06-27
+
 ### Added
 
 - Per-project `setup`/`teardown` scripts: shell commands run on `ws up`/`ws down`
@@ -16,11 +25,6 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `ws up` now actually runs each tab's command. `new-surface` has no `--command`;
   commands are typed via `cmux send` (which requires `--workspace`). Also closes the
   stray empty seed surface `new-workspace` creates.
-
-## [0.1.2] - 2026-06-27
-
-### Fixed
-
 - `ws up` failed to open tabs because the cmux workspace ref was parsed from the
   full `OK workspace:N` reply instead of the handle. Extract the handle robustly.
 
@@ -51,7 +55,8 @@ First public release.
   and strict `--json`; interactive pickers (huh) on a TTY.
 - Account inference for `~/Developer/Personal` vs `~/Developer/work`.
 
-[Unreleased]: https://github.com/richardamare/ws/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/richardamare/ws/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/richardamare/ws/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/richardamare/ws/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/richardamare/ws/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/richardamare/ws/releases/tag/v0.1.0
