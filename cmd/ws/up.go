@@ -42,6 +42,10 @@ func newUpCmd() *cobra.Command {
 				azureState = "logged-in (Reader)"
 			}
 
+			// Persist the durable cmux.json template so a crash/close can restore
+			// the tabs without ws running (ADR-0003). Best-effort: don't fail `up`.
+			_, _ = applyTemplate(p, false)
+
 			ref, err := cmuxSvc().Open(bg(), p)
 			if err != nil {
 				return err

@@ -1,4 +1,4 @@
-.PHONY: build test fmt vet check install
+.PHONY: build test fmt vet check install snapshot
 
 build:
 	go build -o bin/ws ./cmd/ws
@@ -18,3 +18,7 @@ check: vet test
 
 install:
 	go install ./cmd/ws
+
+# local release dry-run (requires goreleaser); does not publish
+snapshot:
+	goreleaser release --snapshot --clean
