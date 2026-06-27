@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git commit --amend*)",
+      "Bash(git reset --hard*)",
+      "Bash(az group delete*)",
+      "Bash(az role assignment delete*)",
+      "Bash(az role assignment create*)",
+      "Bash(az ad sp delete*)",
+      "Bash(terraform apply*)",
+      "Bash(terraform destroy*)"
+    ],
+    "allow": [
+      "Bash(go *)",
+      "Bash(gofmt *)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git branch*)",
+      "Bash(git show*)",
+      "Bash(gh issue view*)",
+      "Bash(gh issue list*)",
+      "Bash(gh pr view*)",
+      "Bash(gh pr list*)",
+      "Bash(gh pr diff*)",
+      "Bash(az account show*)",
+      "Bash(az group show*)",
+      "Bash(az group list*)",
+      "Bash(az role assignment list*)",
+      "Bash(cmux *)"
+    ]
+  },
+  "attribution": {
+    "commit": ""
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -n '{hookSpecificOutput:{hookEventName:\"SessionStart\",additionalContext:\"ws CLAUDE.md non-negotiable rules: (1) Never modify Richard'\\''s Azure role assignments. (2) The per-project SP is READER-only; never grant it write, never use it for write ops. (3) Write/Terraform only via deliberate personal az login (ws elevate), never automated. (4) Never push to master. (5) Every change starts with a GitHub issue. (6) Branch: feat/issue-<n>-slug. (7) Commit: type(scope): subject (#issue). (8) gofmt before commit. (9) No database; local files only.\"}}'"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/audit.sh\""
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-bash.sh\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "path=$(jq -r '.tool_input.file_path // .tool_response.filePath // empty'); if echo \"$path\" | grep -qE '\\.go$'; then jq -n '{hookSpecificOutput:{hookEventName:\"PostToolUse\",additionalContext:\"Go file edited. Run `gofmt -w` and `go build ./...` before committing.\"}}'; fi"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "branch=$(git symbolic-ref --short HEAD 2>/dev/null); issue=$(echo \"$branch\" | grep -oE 'issue-[0-9]+' | grep -oE '[0-9]+'); if [ -n \"$issue\" ]; then jq -n --arg i \"$issue\" '{systemMessage:(\"Before ending: post Done/In progress/Blocked/Next comment on issue #\" + $i + \" (CLAUDE.md rule).\")}'; fi"
+          }
+        ]
+      }
+    ]
+  }
+}
