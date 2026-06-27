@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/richardamare/ws/internal/config"
 	"github.com/richardamare/ws/internal/output"
 	"github.com/richardamare/ws/internal/state"
@@ -23,21 +21,32 @@ func newDownCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			p, err := store.Load(name)
+			if err != nil {
+				return err
+			}
 			st, err := state.NewStore()
 			if err != nil {
 				return err
 			}
-			ref := st.WorkspaceRef(name)
-			if ref == "" {
-				return fmt.Errorf("no open workspace recorded for %q", name)
+			closed := "none"
+			if ref := st.WorkspaceRef(name); ref != "" {
+				if err := cmuxSvc().Close(bg(), ref); err != nil {
+					return err
+				}
+				_ = st.Clear(name)
+				closed = ref
 			}
-			if err := cmuxSvc().Close(bg(), ref); err != nil {
+
+			// Background teardown (e.g. `docker compose down`).
+			if err := runScript(bg(), p, p.Teardown, flagJSON); err != nil {
 				return err
 			}
-			_ = st.Clear(name)
+
 			return output.Record(cmd.OutOrStdout(), resolveFormat(), []output.KV{
 				{Key: "project", Value: name},
-				{Key: "closed", Value: ref},
+				{Key: "closed", Value: closed},
+				{Key: "teardown", Value: itoa(len(p.Teardown))},
 			})
 		},
 	}

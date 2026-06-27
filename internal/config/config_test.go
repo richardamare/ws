@@ -28,6 +28,8 @@ func TestSaveLoadRoundTrip(t *testing.T) {
 			{Type: "browser", Name: "Repo", URL: "https://github.com/me/proj1"},
 		},
 		Sessions: []Bookmark{{Label: "auth", ID: "3ee3", Note: "rbac"}},
+		Setup:    []string{"docker compose up -d"},
+		Teardown: []string{"docker compose down"},
 	}
 	if err := s.Save(want); err != nil {
 		t.Fatalf("save: %v", err)
@@ -47,6 +49,12 @@ func TestSaveLoadRoundTrip(t *testing.T) {
 	}
 	if len(got.Sessions) != 1 || got.Sessions[0].Label != "auth" {
 		t.Errorf("sessions not round-tripped: %+v", got.Sessions)
+	}
+	if len(got.Setup) != 1 || got.Setup[0] != "docker compose up -d" {
+		t.Errorf("setup not round-tripped: %+v", got.Setup)
+	}
+	if len(got.Teardown) != 1 || got.Teardown[0] != "docker compose down" {
+		t.Errorf("teardown not round-tripped: %+v", got.Teardown)
 	}
 }
 

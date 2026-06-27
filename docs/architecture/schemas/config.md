@@ -26,6 +26,11 @@ tabs:
   - { type: browser,  name: Repo,  url: "https://github.com/me/proj1" }
   - { type: browser,  name: Docs,  url: "https://learn.microsoft.com/..." }
 
+setup:                          # shell commands run on `ws up` BEFORE tabs open
+  - docker compose up -d        #   (project cwd + scoped AZURE_CONFIG_DIR; not a tab)
+teardown:                       # shell commands run on `ws down`
+  - docker compose down
+
 sessions:                       # curated Claude session bookmarks (see ../../product/sessions.md)
   - { label: auth-refactor,       id: 3ee3..., note: "RBAC context" }
   - { label: terraform-bootstrap, id: 9ab1..., note: "infra setup" }
@@ -38,7 +43,9 @@ container:                      # optional, OFF by default — only if this proj
 
 ## Notes
 
-- `azure`, `sessions`, and `container` blocks are all optional.
+- `azure`, `sessions`, `container`, `setup`, and `teardown` blocks are all optional.
+- `setup`/`teardown` are background scripts (no tab) for things like starting/stopping
+  `docker compose`. Each line is run via `sh -c` in `cwd` with the scoped env.
 - `config_dir` is the key isolation mechanism: the project's Reader login lives here, never in the
   personal `~/.azure`. See `../../security/README.md`.
 - JSON is also accepted; YAML is the default for hand-editing.
