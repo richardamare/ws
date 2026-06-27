@@ -28,6 +28,12 @@ How we build, and what `ws` does for the user.
 - **`conventions.md`** — code conventions and editing rules.
 - **`definition-of-done.md`** — the pre-merge quality bar; `/code-review` as the gate.
 
+## release-engineering/
+
+How `ws` is versioned and shipped — [`release-engineering/README.md`](release-engineering/README.md):
+SemVer, the tag-driven GoReleaser pipeline, and how to cut a release. Changelog lives at the repo root
+([`CHANGELOG.md`](../CHANGELOG.md)).
+
 ## security/
 
 **The most important doc in the repo.** [`security/README.md`](security/README.md) — the Azure trust
