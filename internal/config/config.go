@@ -21,6 +21,12 @@ type Project struct {
 	Tabs      []Tab      `yaml:"tabs,omitempty"`
 	Sessions  []Bookmark `yaml:"sessions,omitempty"`
 	Container *Container `yaml:"container,omitempty"`
+
+	// Setup runs on `ws up` before tabs open (e.g. "docker compose up -d");
+	// Teardown runs on `ws down`. Each entry is a shell command executed in the
+	// project cwd with the scoped AZURE_CONFIG_DIR — not shown as a tab.
+	Setup    []string `yaml:"setup,omitempty"`
+	Teardown []string `yaml:"teardown,omitempty"`
 }
 
 // Azure holds the scoped Reader service-principal login for a project. The SP is

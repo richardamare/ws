@@ -6,6 +6,17 @@ follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Per-project `setup`/`teardown` scripts: shell commands run on `ws up`/`ws down`
+  in the project cwd with the scoped env (e.g. `docker compose up -d`), not as tabs.
+
+### Fixed
+
+- `ws up` now actually runs each tab's command. `new-surface` has no `--command`;
+  commands are typed via `cmux send` (which requires `--workspace`). Also closes the
+  stray empty seed surface `new-workspace` creates.
+
 ## [0.1.2] - 2026-06-27
 
 ### Fixed

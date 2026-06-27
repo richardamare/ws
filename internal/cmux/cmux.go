@@ -30,9 +30,25 @@ func parseHandle(out string) string {
 	return fields[len(fields)-1]
 }
 
+// parseKind extracts a specific handle kind (e.g. "workspace", "surface") from
+// cmux output like "OK surface:61 pane:21 workspace:18".
+func parseKind(out, kind string) string {
+	return regexp.MustCompile(kind + `:\d+`).FindString(out)
+}
+
 // Service wraps the cmux CLI.
 type Service struct {
 	Run run.Runner
+}
+
+// scopedEnv returns the AZURE_CONFIG_DIR=... entry for a project's isolated
+// login, or nil. Passed to `new-workspace --env` so every shell in the
+// workspace (including across restore) inherits the scoped Reader login.
+func scopedEnv(p *config.Project) []string {
+	if p.Azure != nil && p.Azure.ConfigDir != "" {
+		return []string{"AZURE_CONFIG_DIR=" + config.ExpandHome(p.Azure.ConfigDir)}
+	}
+	return nil
 }
 
 // workspaceArgs builds `cmux new-workspace` for a project.
@@ -41,11 +57,15 @@ func workspaceArgs(p *config.Project) []string {
 	if p.Cwd != "" {
 		args = append(args, "--cwd", config.ExpandHome(p.Cwd))
 	}
+	for _, e := range scopedEnv(p) {
+		args = append(args, "--env", e)
+	}
 	return append(args, "--focus", "true")
 }
 
-// terminalCommand returns the shell command for a terminal tab, prefixed with
-// the scoped AZURE_CONFIG_DIR export when the project has Azure config.
+// terminalCommand returns the shell command for a terminal tab in the durable
+// cmux.json template, prefixed with the scoped AZURE_CONFIG_DIR export (the
+// template path can't rely on --env). Used by template.go.
 func terminalCommand(p *config.Project, tab config.Tab) string {
 	var prefix string
 	if p.Azure != nil && p.Azure.ConfigDir != "" {
@@ -60,20 +80,26 @@ func terminalCommand(p *config.Project, tab config.Tab) string {
 	return prefix + tab.Run
 }
 
-// surfaceArgs builds `cmux new-surface` for one tab in workspace ref.
-func surfaceArgs(ref string, p *config.Project, tab config.Tab) []string {
+// newSurfaceArgs builds `cmux new-surface` for one tab. Terminals get the cwd;
+// the startup command is sent separately (new-surface has no --command).
+func newSurfaceArgs(ref string, p *config.Project, tab config.Tab, focus bool) []string {
 	args := []string{"new-surface", "--workspace", ref}
 	if tab.Type == "browser" {
-		return append(args, "--type", "browser", "--url", tab.URL)
+		args = append(args, "--type", "browser", "--url", tab.URL)
+	} else {
+		args = append(args, "--type", "terminal")
+		if p.Cwd != "" {
+			args = append(args, "--working-directory", config.ExpandHome(p.Cwd))
+		}
 	}
-	args = append(args, "--type", "terminal")
-	if cmd := terminalCommand(p, tab); cmd != "" {
-		args = append(args, "--command", cmd)
+	if focus {
+		args = append(args, "--focus", "true")
 	}
 	return args
 }
 
-// Open creates the workspace and its tabs, returning the workspace ref.
+// Open creates the workspace and its tabs, returning the workspace ref. Terminal
+// startup commands are typed into their surface via `cmux send` (\n = Enter).
 func (s Service) Open(ctx context.Context, p *config.Project) (string, error) {
 	out, err := s.Run.Run(ctx, nil, "cmux", workspaceArgs(p)...)
 	if err != nil {
@@ -83,10 +109,32 @@ func (s Service) Open(ctx context.Context, p *config.Project) (string, error) {
 	if ref == "" {
 		return "", fmt.Errorf("could not parse workspace ref from cmux output: %q", out)
 	}
-	for _, tab := range p.Tabs {
-		if _, err := s.Run.Run(ctx, nil, "cmux", surfaceArgs(ref, p, tab)...); err != nil {
+
+	// new-workspace seeds one default surface; record it so we can close it
+	// after our tabs exist (otherwise the workspace has a stray empty shell).
+	var defaults []string
+	if len(p.Tabs) > 0 {
+		if dl, err := s.Run.Run(ctx, nil, "cmux", "list-pane-surfaces", "--workspace", ref); err == nil {
+			defaults = regexp.MustCompile(`surface:\d+`).FindAllString(dl, -1)
+		}
+	}
+
+	for i, tab := range p.Tabs {
+		sout, err := s.Run.Run(ctx, nil, "cmux", newSurfaceArgs(ref, p, tab, i == 0)...)
+		if err != nil {
 			return ref, fmt.Errorf("open tab %q: %w", tab.Name, err)
 		}
+		if tab.Type != "browser" && tab.Run != "" {
+			sref := parseKind(sout, "surface")
+			if _, err := s.Run.Run(ctx, nil, "cmux", "send", "--workspace", ref, "--surface", sref, "--", tab.Run+`\n`); err != nil {
+				return ref, fmt.Errorf("run command in tab %q: %w", tab.Name, err)
+			}
+		}
+	}
+
+	// Drop the seed surface(s) now that the project's tabs are in place.
+	for _, d := range defaults {
+		_, _ = s.Run.Run(ctx, nil, "cmux", "close-surface", "--surface", d, "--workspace", ref)
 	}
 	return ref, nil
 }
@@ -103,12 +151,18 @@ func (s Service) Close(ctx context.Context, ref string) error {
 // NewTerminal opens a terminal surface running command in the current workspace.
 // Used by `ws elevate` to spawn a marked personal-admin tab.
 func (s Service) NewTerminal(ctx context.Context, command string) error {
-	args := []string{"new-surface", "--type", "terminal", "--focus", "true"}
-	if command != "" {
-		args = append(args, "--command", command)
+	out, err := s.Run.Run(ctx, nil, "cmux", "new-surface", "--type", "terminal", "--focus", "true")
+	if err != nil {
+		return err
 	}
-	_, err := s.Run.Run(ctx, nil, "cmux", args...)
-	return err
+	if command != "" {
+		sref := parseKind(out, "surface")
+		wref := parseKind(out, "workspace")
+		if _, err := s.Run.Run(ctx, nil, "cmux", "send", "--workspace", wref, "--surface", sref, "--", command+`\n`); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // ReloadConfig reloads cmux.json (and Ghostty config) in place — no app restart.

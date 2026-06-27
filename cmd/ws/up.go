@@ -42,6 +42,11 @@ func newUpCmd() *cobra.Command {
 				azureState = "logged-in (Reader)"
 			}
 
+			// Background setup (e.g. `docker compose up -d`) before tabs open.
+			if err := runScript(bg(), p, p.Setup, flagJSON); err != nil {
+				return err
+			}
+
 			// Persist the durable cmux.json template so a crash/close can restore
 			// the tabs without ws running (ADR-0003). Best-effort: don't fail `up`.
 			_, _ = applyTemplate(p, false)
@@ -59,6 +64,7 @@ func newUpCmd() *cobra.Command {
 				{Key: "azure", Value: azureState},
 				{Key: "workspace", Value: ref},
 				{Key: "tabs", Value: itoa(len(p.Tabs))},
+				{Key: "setup", Value: itoa(len(p.Setup))},
 			})
 		},
 	}

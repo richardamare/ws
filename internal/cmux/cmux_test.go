@@ -31,14 +31,34 @@ func TestTerminalCommandNoAzure(t *testing.T) {
 	}
 }
 
-func TestSurfaceArgsBrowser(t *testing.T) {
-	args := surfaceArgs("workspace:1", &config.Project{}, config.Tab{Type: "browser", URL: "https://x"})
+func TestNewSurfaceArgsBrowser(t *testing.T) {
+	args := newSurfaceArgs("workspace:1", &config.Project{}, config.Tab{Type: "browser", URL: "https://x"}, true)
 	joined := strings.Join(args, " ")
 	if !strings.Contains(joined, "--type browser") || !strings.Contains(joined, "--url https://x") {
 		t.Errorf("got %q", joined)
 	}
-	if !strings.Contains(joined, "--workspace workspace:1") {
-		t.Errorf("must target the workspace ref: %q", joined)
+	if !strings.Contains(joined, "--workspace workspace:1") || !strings.Contains(joined, "--focus true") {
+		t.Errorf("must target the workspace ref and focus: %q", joined)
+	}
+}
+
+func TestNewSurfaceArgsTerminalCwd(t *testing.T) {
+	p := &config.Project{Cwd: "/tmp/proj"}
+	args := newSurfaceArgs("workspace:2", p, config.Tab{Type: "terminal", Name: "Shell"}, false)
+	joined := strings.Join(args, " ")
+	if !strings.Contains(joined, "--type terminal") || !strings.Contains(joined, "--working-directory /tmp/proj") {
+		t.Errorf("terminal should set working dir: %q", joined)
+	}
+	if strings.Contains(joined, "--command") {
+		t.Errorf("new-surface has no --command flag: %q", joined)
+	}
+}
+
+func TestWorkspaceArgsEnv(t *testing.T) {
+	p := &config.Project{Name: "p", Azure: &config.Azure{ConfigDir: "~/.azure-p"}}
+	joined := strings.Join(workspaceArgs(p), " ")
+	if !strings.Contains(joined, "--env AZURE_CONFIG_DIR=") {
+		t.Errorf("workspace should pass scoped env: %q", joined)
 	}
 }
 
