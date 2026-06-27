@@ -1,18 +1,17 @@
 package main
 
 import (
+	"github.com/richardamare/ws/internal/account"
 	"github.com/richardamare/ws/internal/config"
 	"github.com/richardamare/ws/internal/output"
 	"github.com/richardamare/ws/internal/state"
-	"github.com/richardamare/ws/internal/workspace"
 	"github.com/spf13/cobra"
 )
 
-func newUpCmd() *cobra.Command {
-	var dryRun bool
-	cmd := &cobra.Command{
-		Use:   "up [project]",
-		Short: "Start working on a project: scoped Azure login + cmux workspace",
+func newStatusCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "status [project]",
+		Short: "Show a project's config and Azure login state",
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			store, err := config.NewStore()
@@ -28,36 +27,31 @@ func newUpCmd() *cobra.Command {
 				return err
 			}
 
-			if dryRun {
-				plan := workspace.PlanFor(p)
-				return output.Table(cmd.OutOrStdout(), resolveFormat(),
-					[]string{"step", "detail"}, plan.Rows())
-			}
-
-			azureState := "n/a"
+			rg, azureState := "n/a", "n/a"
 			if p.Azure != nil {
-				if err := azureSvc().Login(bg(), p.Azure); err != nil {
-					return err
+				rg = p.Azure.ResourceGroup
+				if id, err := azureSvc().Status(bg(), p.Azure); err == nil && id.User == p.Azure.SPAppID {
+					azureState = "logged-in (Reader)"
+				} else {
+					azureState = "logged-out"
 				}
-				azureState = "logged-in (Reader)"
 			}
 
-			ref, err := cmuxSvc().Open(bg(), p)
-			if err != nil {
-				return err
-			}
+			ref := ""
 			if st, err := state.NewStore(); err == nil {
-				_ = st.SetWorkspaceRef(name, ref)
+				ref = st.WorkspaceRef(name)
 			}
 
 			return output.Record(cmd.OutOrStdout(), resolveFormat(), []output.KV{
-				{Key: "project", Value: name},
+				{Key: "name", Value: p.Name},
+				{Key: "cwd", Value: p.Cwd},
+				{Key: "account", Value: account.FromPath(p.Cwd).Name},
+				{Key: "rg", Value: rg},
 				{Key: "azure", Value: azureState},
 				{Key: "workspace", Value: ref},
 				{Key: "tabs", Value: itoa(len(p.Tabs))},
+				{Key: "sessions", Value: itoa(len(p.Sessions))},
 			})
 		},
 	}
-	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "show the plan without executing")
-	return cmd
 }
