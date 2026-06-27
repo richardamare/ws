@@ -57,6 +57,17 @@ type Container struct {
 	ExecShell string `yaml:"exec_shell,omitempty"`
 }
 
+// ExpandHome replaces a leading ~ with the user's home directory. Paths without
+// a leading ~ are returned unchanged.
+func ExpandHome(path string) string {
+	if path == "~" || strings.HasPrefix(path, "~/") {
+		if home, err := os.UserHomeDir(); err == nil {
+			return filepath.Join(home, strings.TrimPrefix(path, "~"))
+		}
+	}
+	return path
+}
+
 // Store is a directory of project YAML files.
 type Store struct {
 	Dir string
@@ -113,6 +124,15 @@ func (s *Store) Save(p *Project) error {
 		return err
 	}
 	return os.WriteFile(s.path(p.Name), b, 0o644)
+}
+
+// Remove deletes a project's config file. Missing is not an error.
+func (s *Store) Remove(name string) error {
+	err := os.Remove(s.path(name))
+	if os.IsNotExist(err) {
+		return nil
+	}
+	return err
 }
 
 // List returns the project names found in the store, sorted.

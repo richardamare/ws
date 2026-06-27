@@ -28,4 +28,6 @@ and tracks Claude Code session IDs so good-context sessions can be reused instea
 
 ## Status
 
-Design complete (2026-06-27). Next: scaffold the Cobra + huh skeleton. See `../roadmap.md`.
+v1 implemented (2026-06-27): all commands wired, scoped Reader-SP login verified end-to-end against a
+real subscription (read-only confinement proven: `delete` outside the RG → AuthorizationFailed). See
+`../roadmap.md` for what remains.

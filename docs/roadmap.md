@@ -20,13 +20,15 @@ Pre-skill design intent. Once `solution-design` / `phase-planner` run, `SOLUTION
 
 ## Build order (MVP first)
 
-1. **Scaffold** — Cobra + huh, global `--json`/`--plain`, output layer, config load/save.
-2. **`ws up`** for one project: read YAML → generate `cmux.json` template → open tabs. **No Azure yet** —
-   prove the workspace loop end to end (the "it opened everything" moment).
-3. **Scoped Azure** — `ws auth`, `AZURE_CONFIG_DIR` isolation, login in tabs.
-4. **`ws new`** — create SP + cert + config.
-5. **Sessions** — `ws save` / `sessions` / `resume`.
-6. **Lifecycle polish** — `down`, `ls`, `status`, `rm` (+ SP cleanup), `rotate`, `elevate`.
+1. ~~**Scaffold** — Cobra + huh, global `--json`/`--plain`, output layer, config load/save.~~ ✅
+2. ~~**`ws up`** — read YAML → open cmux workspace + tabs.~~ ✅ (live `cmux` open; `--dry-run` shows the plan)
+3. ~~**Scoped Azure** — `ws auth`, `AZURE_CONFIG_DIR` isolation, login in tabs.~~ ✅ (verified end-to-end)
+4. ~~**`ws new`** — create SP + cert + config.~~ ✅
+5. ~~**Sessions** — `ws save` / `sessions` / `resume`.~~ ✅
+6. ~~**Lifecycle** — `down`, `ls`, `status`, `rm` (+ cert purge), `rotate`, `elevate`.~~ ✅
+
+Remaining: generate the durable `cmux.json` template (hybrid restore half — currently `up` drives cmux
+live only); per-account tenant config file; richer `cmux` workspace-by-name resolution for `down`.
 
 ## Later / optional
 
