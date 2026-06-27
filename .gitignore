@@ -1,0 +1,12 @@
+# build output
+/ws
+/dist/
+/bin/
+
+# go
+*.test
+*.out
+coverage.*
+
+# editor / OS
+.DS_Store
