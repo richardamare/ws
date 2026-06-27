@@ -91,6 +91,18 @@ func (s Service) NewTerminal(ctx context.Context, command string) error {
 	return err
 }
 
+// ReloadConfig reloads cmux.json (and Ghostty config) in place — no app restart.
+func (s Service) ReloadConfig(ctx context.Context) error {
+	_, err := s.Run.Run(ctx, nil, "cmux", "reload-config")
+	return err
+}
+
+// ValidateConfig checks cmux.json is syntactically valid.
+func (s Service) ValidateConfig(ctx context.Context) error {
+	_, err := s.Run.Run(ctx, nil, "cmux", "config", "validate")
+	return err
+}
+
 // ResumeID returns the focused agent surface's resume id, for session bookmarks.
 func (s Service) ResumeID(ctx context.Context) (string, error) {
 	out, err := s.Run.Run(ctx, nil, "cmux", "surface", "resume", "show")
